@@ -161,7 +161,7 @@ def make_contrib(action):
 		print(NOT_ENOUGH_RESOURCES)
 		return jsonify(NOT_ENOUGH_RESOURCES)
 
-	user_money -= money_to_buy
+	user_money -= MONEY_TO_BUY
 	user['money'] = str(user_money)
 
 
