@@ -1,14 +1,10 @@
 package ru.ladybug.isolatedsingularity;
 
-import android.text.Editable;
-
 import java.io.IOException;
-import java.util.function.Consumer;
 
-import retrofit2.Callback;
 import retrofit2.Response;
-import ru.ladybug.isolatedsingularity.retrofitmodels.ActionReportResponse;
-import ru.ladybug.isolatedsingularity.retrofitmodels.AuthReportResponse;
+import ru.ladybug.isolatedsingularity.net.RetrofitService;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.AuthReportResponse;
 
 public class UserIdentity {
     public UserIdentity() {};

@@ -1,7 +1,6 @@
 package ru.ladybug.isolatedsingularity.fragments;
 
 import android.os.Bundle;
-import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,10 +9,10 @@ import android.widget.TextView;
 
 import ru.ladybug.isolatedsingularity.LocalState;
 import ru.ladybug.isolatedsingularity.R;
-import ru.ladybug.isolatedsingularity.Stateful;
-import ru.ladybug.isolatedsingularity.StatefulActivity;
+import ru.ladybug.isolatedsingularity.net.StatefulActivity;
+import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
-public class UserFragment extends Fragment implements Stateful {
+public class UserFragment extends StatefulFragment {
     private View view;
     private LocalState state;
 
@@ -31,8 +30,8 @@ public class UserFragment extends Fragment implements Stateful {
 
         welcomeText = view.findViewById(R.id.welcomeText);
         moneyText = view.findViewById(R.id.moneyText);
-        state = (LocalState) ((StatefulActivity) getActivity()).getState();
-        state.addListener(this);
+
+        state = ((StatefulActivity) getActivity()).getState();
 
         return view;
     }
@@ -45,6 +44,11 @@ public class UserFragment extends Fragment implements Stateful {
 
     @Override
     public void updateDynamic() {
-        // TODO
+        getActivity().runOnUiThread(() -> moneyText.setText(String.format("Your money: %s", state.getUserData().getMoney())));
+    }
+
+    @Override
+    public void onUpdateError(Throwable throwable) {
+
     }
 }

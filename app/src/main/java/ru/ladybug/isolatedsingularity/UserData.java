@@ -1,6 +1,6 @@
 package ru.ladybug.isolatedsingularity;
 
-import ru.ladybug.isolatedsingularity.retrofitmodels.JUser;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JUser;
 
 public class UserData {
     private int id;

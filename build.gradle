@@ -13,6 +13,11 @@ buildscript {
     }
 }
 
+
+plugins {
+    id "me.tatarka.retrolambda" version "3.7.1"
+}
+
 allprojects {
     repositories {
         google()

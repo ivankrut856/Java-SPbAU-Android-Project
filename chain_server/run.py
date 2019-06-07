@@ -156,13 +156,13 @@ def make_contrib(action):
 	user_id = user["id"]
 	chain_id = action["chain_id"]
 
-	user_money = int(user["money"])
+	user_money = user["money"]
 	if user_money < MONEY_TO_BUY:
 		print(NOT_ENOUGH_RESOURCES)
 		return jsonify(NOT_ENOUGH_RESOURCES)
 
 	user_money -= MONEY_TO_BUY
-	user['money'] = str(user_money)
+	user['money'] = user_money
 
 
 	contrib = mongo.db.contribs.find_one({"user_id": user_id, "chain_id": chain_id})

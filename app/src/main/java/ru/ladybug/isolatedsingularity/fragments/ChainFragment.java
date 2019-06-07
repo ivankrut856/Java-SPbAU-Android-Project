@@ -4,7 +4,6 @@ import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,27 +12,17 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.IOException;
-import java.util.List;
 import java.util.Locale;
 import java.util.function.Consumer;
 
-import retrofit2.Call;
-import retrofit2.Callback;
-import retrofit2.Response;
 import ru.ladybug.isolatedsingularity.ChainData;
-import ru.ladybug.isolatedsingularity.ContributorsAdapter;
+import ru.ladybug.isolatedsingularity.adapters.ContributorsAdapter;
 import ru.ladybug.isolatedsingularity.LocalState;
 import ru.ladybug.isolatedsingularity.R;
-import ru.ladybug.isolatedsingularity.RetrofitService;
-import ru.ladybug.isolatedsingularity.Stateful;
-import ru.ladybug.isolatedsingularity.StatefulActivity;
-import ru.ladybug.isolatedsingularity.UserIdentity;
-import ru.ladybug.isolatedsingularity.retrofitmodels.ActionReportResponse;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JContrib;
-import ru.ladybug.isolatedsingularity.retrofitmodels.MakeContribBody;
+import ru.ladybug.isolatedsingularity.net.StatefulFragment;
+import ru.ladybug.isolatedsingularity.net.StatefulActivity;
 
-public class ChainFragment extends Fragment implements Stateful {
+public class ChainFragment extends StatefulFragment {
     private View view;
 
     private RecyclerView contributorsList;
@@ -44,13 +33,6 @@ public class ChainFragment extends Fragment implements Stateful {
     private Button smallBoostButton;
 
     private LocalState state;
-
-    private View.OnClickListener smallBoostOnClick = new View.OnClickListener() {
-        @Override
-        public void onClick(View v) {
-
-        }
-    };
 
     public ChainFragment() {
 
@@ -73,33 +55,21 @@ public class ChainFragment extends Fragment implements Stateful {
         serverResponseBar.setVisibility(View.INVISIBLE);
 
         smallBoostButton = view.findViewById(R.id.smallBoostButton);
-        smallBoostButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                blockUI();
-                state.makeContrib(new Consumer<String>() {
-                    @Override
-                    public void accept(String s) {
-                        ContribCallback(s);
-                    }
-                });
-            }
+        smallBoostButton.setOnClickListener(v -> {
+            blockUI();
+            state.makeContrib(s -> ContribCallback(s));
         });
 
 
-        state = (LocalState) ((StatefulActivity) getActivity()).getState();
-        state.addListener(this);
+        state = ((StatefulActivity) getActivity()).getState();
 
         return view;
     }
 
     public void ContribCallback(final String message) {
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
-                unblockUI();
-            }
+        getActivity().runOnUiThread(() -> {
+            Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
+            unblockUI();
         });
     }
 
@@ -123,15 +93,17 @@ public class ChainFragment extends Fragment implements Stateful {
     @Override
     public void updateDynamic() {
         final ChainData currentChain = state.getCurrentChain();
-        getActivity().runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                chainTitle.setText(currentChain.getView().getTitle());
-                myContribution.setText(String.format(Locale.getDefault(),"My contribution to the chain: %d", currentChain.getMyContribution()));
-                contributorsAdapter.setContributors(currentChain.getContributors());
-            }
+        getActivity().runOnUiThread(() -> {
+            chainTitle.setText(currentChain.getView().getTitle());
+            myContribution.setText(String.format(Locale.getDefault(),"My contribution to the chain: %d", currentChain.getMyContribution()));
+            contributorsAdapter.setContributors(currentChain.getContributors());
         });
 
         // TODO Dynamic
+    }
+
+    @Override
+    public void onUpdateError(Throwable throwable) {
+
     }
 }

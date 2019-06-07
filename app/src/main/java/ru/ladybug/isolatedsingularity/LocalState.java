@@ -9,35 +9,33 @@ import android.location.LocationManager;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.util.Log;
-import android.widget.SlidingDrawer;
-import android.widget.Toast;
 
 import org.osmdroid.util.GeoPoint;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.BrokenBarrierException;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
+import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import ru.ladybug.isolatedsingularity.retrofitmodels.ActionReportResponse;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JChain;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JContrib;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JUser;
-import ru.ladybug.isolatedsingularity.retrofitmodels.MakeContribBody;
+import ru.ladybug.isolatedsingularity.net.RetrofitService;
+import ru.ladybug.isolatedsingularity.net.StatefulFragment;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.ActionReportResponse;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JChain;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JContrib;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JUser;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.MakeContribBody;
 
 import static android.support.v4.content.ContextCompat.getSystemService;
 
@@ -60,15 +58,22 @@ public class LocalState {
     private Lock updateLock = new ReentrantLock();
     private Lock staticLock = new ReentrantLock();
     private boolean staticHasFinished = false;
-    private List<Stateful> listeners = new ArrayList<>();
+    private List<StatefulFragment> listeners = new ArrayList<>();
     private GeoPoint internalLocation;
-//    private LocationManager locationManager;
+
+    // Rx
+    private Observable<Long> updateObservable;
+    private Observable<Long> staticObservable;
 
 
     @SuppressLint("MissingPermission")
-    public LocalState(Context context) {
-        LocationManager manager = (LocationManager) getSystemService(context, LocationManager.class);
-        Location lastLocation = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER);
+    public LocalState(Context context, UserIdentity user) {
+
+        this.user = user;
+        noStateFill();
+
+        LocationManager manager = getSystemService(context, LocationManager.class);
+        Location lastLocation = Objects.requireNonNull(manager).getLastKnownLocation(LocationManager.GPS_PROVIDER);
         internalLocation = new GeoPoint(lastLocation.getLatitude(), lastLocation.getLongitude());
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, new LocationListener() {
             @Override
@@ -92,20 +97,12 @@ public class LocalState {
             }
         });
 
+        initUpdateCycle();
     }
 
-    public void addListener(Stateful listener) {
-        staticLock.lock();
-        listeners.add(listener);
-        if (staticHasFinished)
-            listener.initStatic();
-        staticLock.unlock();
-    }
-
-    public void initStatic() {
+    public void initStatic() throws IOException, NetworkErrorException {
         try {
             staticLock.lock();
-            Log.d("map", "initStatic in state");
             markers = new ArrayList<>();
             Response<List<JChain>> response = RetrofitService.getInstance().getServerApi().getChains(user.getToken()).execute();
             if (!response.isSuccessful())
@@ -113,20 +110,11 @@ public class LocalState {
             for (JChain chain : Objects.requireNonNull(response.body())) {
                 markers.add(new ChainView(chain));
             }
-            noStateFill();
-            Log.d("map", "initStatic just before calls");
-
-            for (Stateful listener : listeners) {
-                listener.initStatic();
-            }
-            staticHasFinished = true;
 
             userData = fetchUserData();
         }
         catch (Exception e) {
-            e.printStackTrace();
-            throw new RuntimeException("Not implemented");
-            // TODO Retry
+            throw e;
         }
         finally {
             staticLock.unlock();
@@ -177,33 +165,28 @@ public class LocalState {
             //TODO Wtf
         }
 
-
-
-        for (Stateful listener : listeners) {
-            listener.updateDynamic();
-        }
         updateLock.unlock();
     }
 
     public List<ChainView> getMarkers() {
-        return markers;
+        staticLock.lock();
+        List<ChainView> result = markers;
+        staticLock.unlock();
+        return result;
     }
 
     public UserIdentity getUser() {
-        return user;
+        staticLock.lock();
+        UserIdentity result = user;
+        staticLock.unlock();
+        return result;
     }
 
     public int getCurrentChainId() {
-        return currentChainId;
-    }
-
-    public void setCurrentChainId(int id) throws IOException {
         updateLock.lock();
-
-        currentChainId = id;
-        currentChain = getChainById(currentChainId);
-
+        int result = currentChainId;
         updateLock.unlock();
+        return result;
     }
 
     private ChainData getChainById(int chainId) throws IOException {
@@ -244,14 +227,21 @@ public class LocalState {
     }
 
     public GeoPoint getLocation() {
-        return location;
+        updateLock.lock();
+        GeoPoint result = location;
+        updateLock.unlock();
+        return result;
     }
 
     public ChainData getCurrentChain() {
-        return currentChain;
+        updateLock.lock();
+        ChainData result = currentChain;
+        updateLock.unlock();
+        return result;
     }
 
     public void makeContrib(final Consumer<String> contribCallBack) {
+        updateLock.lock();
         RetrofitService.getInstance().getServerApi().makeContrib(new MakeContribBody(currentChain.getView().getChainId(), String.valueOf(1), user.getToken()))
                 .enqueue(new Callback<ActionReportResponse>() {
                     @Override
@@ -260,12 +250,7 @@ public class LocalState {
                             onFailure(call, new RuntimeException("Bad response"));
 
                         if (response.body().getResponse().equals("ok")) {
-                            AsyncTask.execute(new Runnable() {
-                                @Override
-                                public void run() {
-                                    update();
-                                }
-                            });
+                            AsyncTask.execute(() -> update());
                         }
                         contribCallBack.accept(response.body().getMessage());
                     }
@@ -274,17 +259,35 @@ public class LocalState {
                     public void onFailure(Call<ActionReportResponse> call, Throwable t) {
                     }
                 });
-    }
-
-    public void setUser(UserIdentity user) {
-        this.user = user;
-    }
-
-    public Lock getUpdateLock() {
-        return updateLock;
+        updateLock.unlock();
     }
 
     public UserData getUserData() {
-        return userData;
+        updateLock.lock();
+        UserData result = userData;
+        updateLock.unlock();
+        return result;
+    }
+
+    private void initUpdateCycle() {
+        staticObservable = Observable.fromCallable(() -> {
+            initStatic();
+            return 0L;
+        }).subscribeOn(Schedulers.io()).doOnNext(tick -> Log.d("Stateful", "staticObservable:")).cache();
+
+        updateObservable = Observable.interval(0, 3, TimeUnit.SECONDS)
+                .subscribeOn(Schedulers.io())
+                .map(tick -> {
+                    update();
+                    return tick;
+                }).doOnNext(tick -> Log.d("Stateful", "updateObservable:")).share().doOnSubscribe(tick -> Log.d("Stateful", "subscribed"));
+    }
+
+    public Observable<Long> getUpdates() {
+        return updateObservable;
+    }
+
+    public Observable<Long> getStatics() {
+        return staticObservable;
     }
 }

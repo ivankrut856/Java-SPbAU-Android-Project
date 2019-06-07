@@ -1,4 +1,4 @@
-package ru.ladybug.isolatedsingularity.retrofitmodels;
+package ru.ladybug.isolatedsingularity.net.retrofitmodels;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;

@@ -2,7 +2,7 @@ package ru.ladybug.isolatedsingularity;
 
 import org.osmdroid.util.GeoPoint;
 
-import ru.ladybug.isolatedsingularity.retrofitmodels.JChain;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JChain;
 
 public class ChainView {
     private String title;

@@ -1,4 +1,4 @@
-package ru.ladybug.isolatedsingularity;
+package ru.ladybug.isolatedsingularity.adapters;
 
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
@@ -9,6 +9,9 @@ import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
+
+import ru.ladybug.isolatedsingularity.ChainData;
+import ru.ladybug.isolatedsingularity.R;
 
 public class ContributorsAdapter extends RecyclerView.Adapter<ContributorsAdapter.ContributorHolder> {
     private List<ChainData.Contributor> contributors = new ArrayList<>();

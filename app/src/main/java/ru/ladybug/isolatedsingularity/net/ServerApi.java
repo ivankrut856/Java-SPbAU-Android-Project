@@ -1,4 +1,4 @@
-package ru.ladybug.isolatedsingularity;
+package ru.ladybug.isolatedsingularity.net;
 
 import java.util.List;
 
@@ -8,12 +8,12 @@ import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
-import ru.ladybug.isolatedsingularity.retrofitmodels.ActionReportResponse;
-import ru.ladybug.isolatedsingularity.retrofitmodels.AuthReportResponse;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JChain;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JContrib;
-import ru.ladybug.isolatedsingularity.retrofitmodels.JUser;
-import ru.ladybug.isolatedsingularity.retrofitmodels.MakeContribBody;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.ActionReportResponse;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.AuthReportResponse;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JChain;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JContrib;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.JUser;
+import ru.ladybug.isolatedsingularity.net.retrofitmodels.MakeContribBody;
 
 public interface ServerApi {
     @GET("chains/{id}")

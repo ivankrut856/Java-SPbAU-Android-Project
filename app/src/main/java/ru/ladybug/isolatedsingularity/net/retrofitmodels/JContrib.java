@@ -1,9 +1,7 @@
-package ru.ladybug.isolatedsingularity.retrofitmodels;
+package ru.ladybug.isolatedsingularity.net.retrofitmodels;
 
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
-
-import java.util.List;
 
 public class JContrib {
     @SerializedName("user_id")
