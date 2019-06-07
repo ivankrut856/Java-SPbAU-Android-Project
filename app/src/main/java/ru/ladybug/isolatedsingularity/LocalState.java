@@ -75,7 +75,13 @@ public class LocalState {
 
         LocationManager manager = getSystemService(context, LocationManager.class);
         Location lastLocation = Objects.requireNonNull(manager).getLastKnownLocation(LocationManager.GPS_PROVIDER);
-        internalLocation = new GeoPoint(lastLocation.getLatitude(), lastLocation.getLongitude());
+        if (lastLocation == null) {
+            internalLocation = new GeoPoint(59.9342802, 30.3350986);
+        }
+        else {
+            internalLocation = new GeoPoint(lastLocation.getLatitude(), lastLocation.getLongitude());
+        }
+
         manager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 1, 0, new LocationListener() {
             @Override
             public void onLocationChanged(Location location) {

@@ -132,7 +132,7 @@ public class MapFragment extends StatefulFragment {
 
     private Overlay getPositionOverlay() {
         OverlayItem myPositionOverlayItem = new OverlayItem("You", "Smart player", state.getLocation());
-        return new ItemizedIconOverlay<>(Collections.singletonList(myPositionOverlayItem),
+        return new ItemizedIconOverlay<>(new ArrayList<>(Collections.singleton(myPositionOverlayItem)),
                 Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.person)),
                 new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
                     @Override
