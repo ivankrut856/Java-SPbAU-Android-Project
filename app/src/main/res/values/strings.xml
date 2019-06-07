@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">isolatedSingularity</string>
 
-    <!-- TODO: Remove or change this placeholder text -->
-    <string name="hello_blank_fragment">Hello blank fragment</string>
     <string name="title_activity_login">LoginActivity</string>
+    <string name="no_chain_text">No chain around</string>
+    <string name="server_error_text">Cannot connect to game server</string>
 </resources>

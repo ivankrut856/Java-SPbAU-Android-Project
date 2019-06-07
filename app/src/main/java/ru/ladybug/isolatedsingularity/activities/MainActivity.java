@@ -2,8 +2,10 @@ package ru.ladybug.isolatedsingularity.activities;
 
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
+import android.support.v4.app.FragmentManager;
 import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 
 import io.reactivex.Observable;
 import ru.ladybug.isolatedsingularity.LocalState;
@@ -24,69 +26,42 @@ public class MainActivity extends AppCompatActivity implements StatefulActivity 
     private ChainFragment chainFragment;
     private UserFragment userFragment;
 
+    private ViewPagerAdapter adapter;
+
     private LocalState state;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initInterface();
-
         UserIdentity currentUser = UserIdentity.fromData(getIntent().getIntExtra("user_id", -1), getIntent().getStringExtra("token"));
         state = new LocalState(getApplicationContext(), currentUser);
+        FragmentManager manager = getSupportFragmentManager();
+        adapter = new ViewPagerAdapter(manager, state);
+
+        initInterface();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-
-        cityMapFragment.subscribe(state);
-        chainFragment.subscribe(state);
-        userFragment.subscribe(state);
+        Log.d("Stateful fragment", "onResumeActivity: ");
     }
 
     @Override
     protected void onPause() {
+        Log.d("Stateful fragment", "onPauseActivity: ");
         super.onPause();
     }
 
     private void initInterface() {
-//        try {
-            tabsMenu = findViewById(R.id.topMenu);
-            tabsViewPager = findViewById(R.id.mainContentPager);
-            tabsViewPager.setOffscreenPageLimit(3);
-            ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager());
+        tabsMenu = findViewById(R.id.topMenu);
+        tabsViewPager = findViewById(R.id.mainContentPager);
+        tabsViewPager.setOffscreenPageLimit(3);
 
-            cityMapFragment = new MapFragment();
-            adapter.addFragment(cityMapFragment, "Map");
-
-            chainFragment = new ChainFragment();
-            adapter.addFragment(chainFragment, "Chain View");
-
-            userFragment = new UserFragment();
-            adapter.addFragment(userFragment, "User");
-
-            tabsViewPager.setAdapter(adapter);
-            tabsMenu.setupWithViewPager(tabsViewPager, true);
-//        }
-//        catch (Exception e) {
-//            // TODO Retry
-//        }
+        tabsViewPager.setAdapter(adapter);
+        tabsMenu.setupWithViewPager(tabsViewPager, true);
     }
-
-//    private void startUpdateCycle() {
-//        Timer timer = new Timer(false);
-//        timer.scheduleAtFixedRate(new TimerTask() {
-//            @Override
-//            public void run() {
-//                update();
-//            }
-//        }, 0, 3000);
-//    }
-//
-//    private void update() {
-//        state.update();
-//    }
 
     @Override
     public LocalState getState() {

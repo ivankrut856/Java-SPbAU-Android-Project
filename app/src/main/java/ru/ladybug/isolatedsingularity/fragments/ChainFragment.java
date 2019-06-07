@@ -1,7 +1,6 @@
 package ru.ladybug.isolatedsingularity.fragments;
 
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -12,20 +11,19 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Collections;
 import java.util.Locale;
-import java.util.function.Consumer;
+import java.util.Objects;
 
 import ru.ladybug.isolatedsingularity.ChainData;
-import ru.ladybug.isolatedsingularity.adapters.ContributorsAdapter;
 import ru.ladybug.isolatedsingularity.LocalState;
 import ru.ladybug.isolatedsingularity.R;
-import ru.ladybug.isolatedsingularity.net.StatefulFragment;
+import ru.ladybug.isolatedsingularity.adapters.ContributorsAdapter;
 import ru.ladybug.isolatedsingularity.net.StatefulActivity;
+import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
 public class ChainFragment extends StatefulFragment {
-    private View view;
 
-    private RecyclerView contributorsList;
     private ContributorsAdapter contributorsAdapter;
     private TextView chainTitle;
     private TextView myContribution;
@@ -41,9 +39,9 @@ public class ChainFragment extends StatefulFragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
-        view = inflater.inflate(R.layout.chain_fragment, container, false);
+        View view = inflater.inflate(R.layout.chain_fragment, container, false);
 
-        contributorsList = view.findViewById(R.id.contributorsView);
+        RecyclerView contributorsList = view.findViewById(R.id.contributorsView);
         contributorsList.setLayoutManager(new LinearLayoutManager(getContext()));
         contributorsAdapter = new ContributorsAdapter();
         contributorsList.setAdapter(contributorsAdapter);
@@ -61,7 +59,7 @@ public class ChainFragment extends StatefulFragment {
         });
 
 
-        state = ((StatefulActivity) getActivity()).getState();
+        state = ((StatefulActivity) Objects.requireNonNull(getActivity())).getState();
 
         return view;
     }
@@ -93,17 +91,15 @@ public class ChainFragment extends StatefulFragment {
     @Override
     public void updateDynamic() {
         final ChainData currentChain = state.getCurrentChain();
-        getActivity().runOnUiThread(() -> {
+        if (currentChain == null) {
+            chainTitle.setText(getString(R.string.no_chain_text));
+            myContribution.setText("");
+            contributorsAdapter.setContributors(Collections.emptyList());
+        }
+        else {
             chainTitle.setText(currentChain.getView().getTitle());
-            myContribution.setText(String.format(Locale.getDefault(),"My contribution to the chain: %d", currentChain.getMyContribution()));
+            myContribution.setText(String.format(Locale.getDefault(), "My contribution to the chain: %d", currentChain.getMyContribution()));
             contributorsAdapter.setContributors(currentChain.getContributors());
-        });
-
-        // TODO Dynamic
-    }
-
-    @Override
-    public void onUpdateError(Throwable throwable) {
-
+        }
     }
 }

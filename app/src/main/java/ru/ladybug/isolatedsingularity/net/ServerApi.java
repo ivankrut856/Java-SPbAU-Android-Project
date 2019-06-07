@@ -2,6 +2,7 @@ package ru.ladybug.isolatedsingularity.net;
 
 import java.util.List;
 
+import io.reactivex.Observable;
 import retrofit2.Call;
 import retrofit2.http.Body;
 import retrofit2.http.GET;
@@ -22,12 +23,15 @@ public interface ServerApi {
     Call<List<JChain>> getChains(@Query("token") String token);
     @GET("chains/contrib/{id}")
     Call<List<JContrib>> getContribsByChain(@Path("id") int id, @Query("token") String token);
+
     @POST("chains/action/")
     Call<ActionReportResponse> makeContrib(@Body MakeContribBody body);
-    @GET("login")
-    Call<AuthReportResponse> tryLogin(@Query("username") String username, @Query("password") String password);
+
     @GET("user")
     Call<JUser> getUserData(@Query("token") String token);
+
+    @GET("login")
+    Call<AuthReportResponse> tryLogin(@Query("username") String username, @Query("password") String password);
 
 
     @GET("register")

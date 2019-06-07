@@ -1,16 +1,14 @@
 package ru.ladybug.isolatedsingularity.fragments;
 
-import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.v4.app.Fragment;
-import android.util.Log;
+import android.support.annotation.NonNull;
+import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.FrameLayout;
 
 import org.osmdroid.api.IMapController;
 import org.osmdroid.config.Configuration;
@@ -19,37 +17,35 @@ import org.osmdroid.util.GeoPoint;
 import org.osmdroid.views.MapView;
 import org.osmdroid.views.overlay.ItemizedIconOverlay;
 import org.osmdroid.views.overlay.ItemizedOverlayWithFocus;
+import org.osmdroid.views.overlay.Overlay;
 import org.osmdroid.views.overlay.OverlayItem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 import ru.ladybug.isolatedsingularity.ChainView;
 import ru.ladybug.isolatedsingularity.LocalState;
 import ru.ladybug.isolatedsingularity.R;
-import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 import ru.ladybug.isolatedsingularity.net.StatefulActivity;
+import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
 public class MapFragment extends StatefulFragment {
-    private List<ChainView> mapChains;
 
-    private View view;
     private Context context;
     private Button locationButton;
+
     private MapView cityMap;
-    private IMapController mapController;
+    private int myPositionOverlayIndex = -1;
 
     private LocalState state;
 
-    public MapFragment() {
-
-    }
-
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
 
-        view = inflater.inflate(R.layout.map_fragment, container, false);
+        View view = inflater.inflate(R.layout.map_fragment, container, false);
 
         context = getContext();
         Configuration.getInstance().load(context, PreferenceManager.getDefaultSharedPreferences(context));
@@ -62,8 +58,12 @@ public class MapFragment extends StatefulFragment {
                 cityMap.getController().animateTo(state.getCurrentChain().getView().getPosition());
             }
         });
+        Button positionButton = view.findViewById(R.id.position);
+        positionButton.setOnClickListener(v -> {
+            cityMap.getController().animateTo(state.getLocation());
+        });
 
-        state = ((StatefulActivity) getActivity()).getState();
+        state = ((StatefulActivity) Objects.requireNonNull(getActivity())).getState();
 
         return view;
     }
@@ -84,51 +84,68 @@ public class MapFragment extends StatefulFragment {
 
     @Override
     public void initStatic() {
-        Log.d("Stateful fragment", "initStatic: happening");
-        cityMap.post(() -> {
-            mapChains = state.getMarkers();
-            Log.d("Stateful fragment", "initStatic: post with " + (mapChains != null ? mapChains.size() : "null"));
-            mapController = cityMap.getController();
-            mapController.setZoom(17f);
-            GeoPoint startPoint = state.getLocation();
-            mapController.animateTo(startPoint);
+        IMapController mapController = cityMap.getController();
+        mapController.setZoom(17f);
 
-            List<OverlayItem> markers = new ArrayList<>();
-            for (ChainView chain : mapChains) {
-                markers.add(new OverlayItem(chain.getTitle(), chain.getDescription(), chain.getPosition()));
-            }
+        List<ChainView> mapChains = state.getMarkers();
+        GeoPoint startPoint = state.getLocation();
+        mapController.animateTo(startPoint);
 
-            ItemizedOverlayWithFocus<OverlayItem> markersOverlay = new ItemizedOverlayWithFocus<>(markers,
-                    new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
-                        @Override
-                        public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
-                            return true;
-                        }
+        List<OverlayItem> markers = new ArrayList<>();
+        for (ChainView chain : mapChains) {
+            markers.add(new OverlayItem(chain.getTitle(), chain.getDescription(), chain.getPosition()));
+        }
 
-                        @Override
-                        public boolean onItemLongPress(final int index, final OverlayItem item) {
-                            return false;
-                        }
-                    }, context);
-            markersOverlay.setFocusItemsOnTap(true);
-            cityMap.getOverlays().add(markersOverlay);
-        });
+        cityMap.getOverlays().clear();
+
+        ItemizedOverlayWithFocus<OverlayItem> markersOverlay = new ItemizedOverlayWithFocus<>(markers,
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(final int index, final OverlayItem item) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean onItemLongPress(final int index, final OverlayItem item) {
+                        return false;
+                    }
+                },
+                context);
+        markersOverlay.setFocusItemsOnTap(true);
+        cityMap.getOverlays().add(markersOverlay);
+        cityMap.getOverlays().add(getPositionOverlay());
+        myPositionOverlayIndex = cityMap.getOverlays().size() - 1;
     }
 
-    public void selectChain() {
-        Log.d("Stateful fragment", "selectChain: " + Thread.currentThread().getName());
-        Log.d("Stateful fragment", "selectChain: " + state.getCurrentChainId());
-        getActivity().runOnUiThread(() -> {
-            if (state.getCurrentChainId() != -1) {
-                locationButton.setText(state.getCurrentChain().getView().getTitle());
-            }
-        });
+    private void selectChain() {
+        if (state.getCurrentChainId() == -1) {
+            locationButton.setText(getString(R.string.no_chain_text));
+        }
+        else {
+            locationButton.setText(state.getCurrentChain().getView().getTitle());
+        }
+
+        if (myPositionOverlayIndex != -1) {
+            cityMap.getOverlayManager().set(myPositionOverlayIndex, getPositionOverlay());
+        }
     }
 
-    @Override
-    public void onAttach(Activity activity) {
-        super.onAttach(activity);
-        Log.d("Stateful fragment", "onAttach: " + getActivity());
+    private Overlay getPositionOverlay() {
+        OverlayItem myPositionOverlayItem = new OverlayItem("You", "Smart player", state.getLocation());
+        return new ItemizedIconOverlay<>(Collections.singletonList(myPositionOverlayItem),
+                Objects.requireNonNull(ContextCompat.getDrawable(context, R.drawable.person)),
+                new ItemizedIconOverlay.OnItemGestureListener<OverlayItem>() {
+                    @Override
+                    public boolean onItemSingleTapUp(int index, OverlayItem item) {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean onItemLongPress(int index, OverlayItem item) {
+                        return false;
+                    }
+                },
+                context);
     }
 
     @Override
@@ -139,11 +156,5 @@ public class MapFragment extends StatefulFragment {
     @Override
     public void updateDynamic() {
         selectChain();
-        // TODO Dynamic
-    }
-
-    @Override
-    public void onUpdateError(Throwable throwable) {
-        throw new RuntimeException(throwable);
     }
 }

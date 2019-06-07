@@ -29,6 +29,7 @@ import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
+import retrofit2.Retrofit;
 import ru.ladybug.isolatedsingularity.net.RetrofitService;
 import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 import ru.ladybug.isolatedsingularity.net.retrofitmodels.ActionReportResponse;

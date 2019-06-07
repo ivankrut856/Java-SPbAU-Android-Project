@@ -8,6 +8,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import retrofit2.Call;
@@ -20,6 +21,7 @@ import ru.ladybug.isolatedsingularity.net.retrofitmodels.AuthReportResponse;
 public class LoginActivity extends AppCompatActivity {
 
     private Button loginButton;
+    private ProgressBar progressBar;
     private EditText passwordInput;
     private EditText loginInput;
 
@@ -28,12 +30,14 @@ public class LoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         loginButton = findViewById(R.id.loginButton);
+        progressBar = findViewById(R.id.progressBar);
         passwordInput = findViewById(R.id.passwordInput);
         loginInput = findViewById(R.id.loginInput);
 
         checkDangerousPermissions();
 
         loginButton.setOnClickListener(view -> {
+            Toast.makeText(getApplicationContext(), "Login attempt", Toast.LENGTH_SHORT).show();
             blockUI();
             RetrofitService.getInstance().getServerApi().tryLogin(loginInput.getText().toString(), passwordInput.getText().toString()).enqueue(new Callback<AuthReportResponse>() {
                 @Override
@@ -42,6 +46,7 @@ public class LoginActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Unable to login. Please check login and password", Toast.LENGTH_LONG).show();
                         return;
                     }
+                    unblockUI();
 
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     intent.putExtra("user_id", response.body().getUserId());
@@ -49,12 +54,12 @@ public class LoginActivity extends AppCompatActivity {
                     startActivity(intent);
                     finish();
 
-                    unblockUI();
                 }
 
                 @Override
                 public void onFailure(Call<AuthReportResponse> call, Throwable t) {
                     Toast.makeText(getApplicationContext(), "Unable to login. Please check your network connection", Toast.LENGTH_LONG).show();
+                    unblockUI();
                 }
             });
         });
@@ -65,16 +70,19 @@ public class LoginActivity extends AppCompatActivity {
             ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, 0);
         }
         catch (Exception e) {
-            // TODO Retry
+            Toast.makeText(getApplicationContext(), "Permissions were not granted", Toast.LENGTH_LONG).show();;
+            finish();
         }
     }
 
     public void blockUI() {
-
+        loginButton.setClickable(false);
+        progressBar.setVisibility(View.VISIBLE);
     }
 
     public void unblockUI() {
-
+        loginButton.setClickable(true);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
 }

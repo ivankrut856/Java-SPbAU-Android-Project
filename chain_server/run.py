@@ -226,6 +226,5 @@ def register():
 
 
 @app.route("/")
-def hello():
-    return "Hello World!"
-
+def about():
+	return app.send_static_file("index.html")
