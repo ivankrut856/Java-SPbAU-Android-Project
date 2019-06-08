@@ -1,5 +1,6 @@
 package ru.ladybug.isolatedsingularity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -36,6 +37,7 @@ public class FixedMapView extends MapView {
     // true if we intercept MOVE events in order to prevent the view pager to swipe views
     private boolean interceptMove = false;
 
+    @SuppressLint("ClickableViewAccessibility")
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         // Prevent  the ViewPager to swipe instead of scrolling

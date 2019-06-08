@@ -26,7 +26,7 @@ class AuthManager:
 		return {"user_name": username, "user_id": next_id, "password": hashed.decode("utf-8")}
 
 	def get_new_user(self, name, id):
-		return {"name": name, "id": id, "money": "0"}
+		return {"name": name, "id": id, "money": 100}
 
 	def search(self, username, password):
 		user = self.mongo.db.usertokens.find_one({"user_name": username})

@@ -69,6 +69,7 @@ def event_loop():
 		user_result = {}
 		users_list = chain_contributors[chain]
 		total_contrib = chain_contribs[chain]
+
 		users_list.sort(key=lambda x: keyf(int(x["value"]), total_contrib))
 		total = 0
 		for user in users_list:
@@ -210,7 +211,7 @@ def register():
 	username = request.args.get("username")
 	name = request.args.get("name")
 	password = request.args.get("password")
-	if username is None or password is None:
+	if username is None or password is None or name is None:
 		return jsonify(WRONG_AUTH_DATA)
 
 	user = auth_manager.get_usertoken(username)
