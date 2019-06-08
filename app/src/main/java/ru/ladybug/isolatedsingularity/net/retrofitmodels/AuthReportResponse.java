@@ -3,6 +3,7 @@ package ru.ladybug.isolatedsingularity.net.retrofitmodels;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/** Retrofit model for get responses to login attempt */
 public class AuthReportResponse {
     @SerializedName("response")
     @Expose

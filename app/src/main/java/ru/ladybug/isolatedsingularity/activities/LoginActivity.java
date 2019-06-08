@@ -4,6 +4,7 @@ import android.Manifest;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -13,6 +14,7 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import java.io.IOException;
 import java.security.Permission;
 
 import retrofit2.Call;
@@ -29,6 +31,7 @@ public class LoginActivity extends AppCompatActivity {
     private EditText passwordInput;
     private EditText loginInput;
 
+    /** {@inheritDoc} */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,7 +48,12 @@ public class LoginActivity extends AppCompatActivity {
             blockUI();
             RetrofitService.getInstance().getServerApi().tryLogin(loginInput.getText().toString(), passwordInput.getText().toString()).enqueue(new Callback<AuthReportResponse>() {
                 @Override
-                public void onResponse(Call<AuthReportResponse> call, Response<AuthReportResponse> response) {
+                public void onResponse(@NonNull Call<AuthReportResponse> call, @NonNull Response<AuthReportResponse> response) {
+                    if (!response.isSuccessful() || response.body() == null) {
+                        onFailure(call, new IOException("Bad response"));
+                        return;
+                    }
+
                     if (response.body().getResponse().equals("wa")) {
                         Toast.makeText(getApplicationContext(), "Unable to login. Please check login and password", Toast.LENGTH_LONG).show();
                         return;
@@ -57,11 +65,10 @@ public class LoginActivity extends AppCompatActivity {
                     intent.putExtra("token", response.body().getToken());
                     startActivity(intent);
                     finish();
-
                 }
 
                 @Override
-                public void onFailure(Call<AuthReportResponse> call, Throwable t) {
+                public void onFailure(@NonNull Call<AuthReportResponse> call, @NonNull Throwable t) {
                     Toast.makeText(getApplicationContext(), "Unable to login. Please check your network connection", Toast.LENGTH_LONG).show();
                     unblockUI();
                 }
@@ -78,8 +85,9 @@ public class LoginActivity extends AppCompatActivity {
                 1);
     }
 
+    /** {@inheritDoc} */
     @Override
-    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String permissions[], @NonNull int[] grantResults) {
         switch (requestCode) {
             case 1: {
                 if (grantResults.length >= 4 &&
@@ -95,12 +103,12 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    public void blockUI() {
+    private void blockUI() {
         loginButton.setClickable(false);
         progressBar.setVisibility(View.VISIBLE);
     }
 
-    public void unblockUI() {
+    private void unblockUI() {
         loginButton.setClickable(true);
         progressBar.setVisibility(View.INVISIBLE);
     }

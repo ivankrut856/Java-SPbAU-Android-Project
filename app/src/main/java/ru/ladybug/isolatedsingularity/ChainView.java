@@ -4,12 +4,14 @@ import org.osmdroid.util.GeoPoint;
 
 import ru.ladybug.isolatedsingularity.net.retrofitmodels.JChain;
 
+/** Class represents descriptive part of chain data relevant to the map */
 public class ChainView {
     private String title;
     private String description;
     private GeoPoint position;
     private int chainId;
 
+    /** Field-wise constructor */
     public ChainView(String title, String description, GeoPoint position, int chainId) {
         this.title = title;
         this.description = description;
@@ -17,6 +19,9 @@ public class ChainView {
         this.chainId = chainId;
     }
 
+    /** Constructor from api response type
+     * @param jchain the chain view in api response format
+     */
     public ChainView(JChain jchain) {
         title = jchain.getTitle();
         description = jchain.getDescription();

@@ -7,29 +7,18 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 
-import io.reactivex.Observable;
 import ru.ladybug.isolatedsingularity.LocalState;
 import ru.ladybug.isolatedsingularity.R;
-import ru.ladybug.isolatedsingularity.net.StatefulActivity;
 import ru.ladybug.isolatedsingularity.UserIdentity;
 import ru.ladybug.isolatedsingularity.adapters.ViewPagerAdapter;
-import ru.ladybug.isolatedsingularity.fragments.ChainFragment;
-import ru.ladybug.isolatedsingularity.fragments.MapFragment;
-import ru.ladybug.isolatedsingularity.fragments.UserFragment;
+import ru.ladybug.isolatedsingularity.net.StatefulActivity;
 
 public class MainActivity extends AppCompatActivity implements StatefulActivity {
 
-    private TabLayout tabsMenu;
-    private ViewPager tabsViewPager;
-
-    private MapFragment cityMapFragment;
-    private ChainFragment chainFragment;
-    private UserFragment userFragment;
-
     private ViewPagerAdapter adapter;
-
     private LocalState state;
 
+    /** {@inheritDoc} */
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,12 +31,14 @@ public class MainActivity extends AppCompatActivity implements StatefulActivity 
         initInterface();
     }
 
+    /** {@inheritDoc} */
     @Override
     protected void onResume() {
         super.onResume();
         Log.d("Stateful fragment", "onResumeActivity: ");
     }
 
+    /** {@inheritDoc} */
     @Override
     protected void onPause() {
         Log.d("Stateful fragment", "onPauseActivity: ");
@@ -55,14 +46,15 @@ public class MainActivity extends AppCompatActivity implements StatefulActivity 
     }
 
     private void initInterface() {
-        tabsMenu = findViewById(R.id.topMenu);
-        tabsViewPager = findViewById(R.id.mainContentPager);
+        TabLayout tabsMenu = findViewById(R.id.topMenu);
+        ViewPager tabsViewPager = findViewById(R.id.mainContentPager);
         tabsViewPager.setOffscreenPageLimit(3);
 
         tabsViewPager.setAdapter(adapter);
         tabsMenu.setupWithViewPager(tabsViewPager, true);
     }
 
+    /** {@inheritDoc} */
     @Override
     public LocalState getState() {
         return state;

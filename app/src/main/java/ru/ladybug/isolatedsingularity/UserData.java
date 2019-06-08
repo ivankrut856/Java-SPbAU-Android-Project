@@ -2,25 +2,23 @@ package ru.ladybug.isolatedsingularity;
 
 import ru.ladybug.isolatedsingularity.net.retrofitmodels.JUser;
 
+/** Class represents user data relevant to the client side */
 public class UserData {
-    private int id;
     private String name;
     private int money;
 
-    public UserData(int id, String name, int money) {
-        this.id = id;
+    /** Field-wise constructor */
+    public UserData(String name, int money) {
         this.name = name;
         this.money = money;
     }
 
+    /** Constructor from api response type
+     * @param user the user data in api response format
+     */
     public UserData(JUser user) {
-        this.id = user.getId();
         this.name = user.getName();
         this.money = user.getMoney();
-    }
-
-    public int getId() {
-        return id;
     }
 
     public String getName() {

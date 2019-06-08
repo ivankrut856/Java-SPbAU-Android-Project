@@ -6,9 +6,8 @@ import android.content.Context;
 import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.util.Log;
+import android.support.annotation.NonNull;
 
 import org.osmdroid.util.GeoPoint;
 
@@ -16,12 +15,9 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 
 import io.reactivex.Observable;
@@ -29,9 +25,7 @@ import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
-import retrofit2.Retrofit;
 import ru.ladybug.isolatedsingularity.net.RetrofitService;
-import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 import ru.ladybug.isolatedsingularity.net.retrofitmodels.ActionReportResponse;
 import ru.ladybug.isolatedsingularity.net.retrofitmodels.JChain;
 import ru.ladybug.isolatedsingularity.net.retrofitmodels.JContrib;
@@ -40,43 +34,44 @@ import ru.ladybug.isolatedsingularity.net.retrofitmodels.MakeContribBody;
 
 import static android.support.v4.content.ContextCompat.getSystemService;
 
+/** Main state of the client relevant game world */
 public class LocalState {
 
     //Finals
-    private ChainData NO_CHAIN = new ChainData(new ChainView("No chain", "", null, -1), Collections.<ChainData.Contributor>emptyList(), BigInteger.ZERO);
+    /** Fake chain using when no other chains around or an exception occurred during nearest chain update*/
+    public final ChainData NO_CHAIN = new ChainData(new ChainView("No chain around", "", null, -1), Collections.emptyList(), BigInteger.ZERO);
+    /** Fake user using when an exception occurred during user data update */
+    public final UserData NO_USER = new UserData("No user", 0);
+    /** Default location using when it is not possible to determine real user location */
+    private GeoPoint DEFAULT_LOCATION = new GeoPoint(59.9342802, 30.3350986);
 
     // Static
-    private List<ChainView> markers;
-    private UserIdentity user;
+    private volatile List<ChainView> markers;
+    private volatile UserIdentity user;
 
     // Dynamic
-    private int currentChainId;
-    private GeoPoint location;
-    private ChainData currentChain;
-    private UserData userData;
+    private volatile int currentChainId;
+    private volatile GeoPoint location;
+    private volatile ChainData currentChain;
+    private volatile UserData userData;
 
     // Service
-    private Lock updateLock = new ReentrantLock();
-    private Lock staticLock = new ReentrantLock();
-    private boolean staticHasFinished = false;
-    private List<StatefulFragment> listeners = new ArrayList<>();
     private GeoPoint internalLocation;
 
     // Rx
     private Observable<Long> updateObservable;
     private Observable<Long> staticObservable;
 
-
+    /** Construct state initializing just instant data and fill other with defaults and also starts update cycle */
     @SuppressLint("MissingPermission")
     public LocalState(Context context, UserIdentity user) {
 
         this.user = user;
-        noStateFill();
 
         LocationManager manager = getSystemService(context, LocationManager.class);
         Location lastLocation = Objects.requireNonNull(manager).getLastKnownLocation(LocationManager.GPS_PROVIDER);
         if (lastLocation == null) {
-            internalLocation = new GeoPoint(59.9342802, 30.3350986);
+            internalLocation = DEFAULT_LOCATION;
         }
         else {
             internalLocation = new GeoPoint(lastLocation.getLatitude(), lastLocation.getLongitude());
@@ -104,29 +99,21 @@ public class LocalState {
             }
         });
 
+        noStateFill();
         initUpdateCycle();
     }
 
-    public void initStatic() throws IOException, NetworkErrorException {
-        try {
-            staticLock.lock();
-            markers = new ArrayList<>();
-            Response<List<JChain>> response = RetrofitService.getInstance().getServerApi().getChains(user.getToken()).execute();
-            if (!response.isSuccessful())
-                throw new NetworkErrorException("Bad response");
-            for (JChain chain : Objects.requireNonNull(response.body())) {
-                markers.add(new ChainView(chain));
-            }
+    private void initStatic() throws IOException, NetworkErrorException {
+        markers = new ArrayList<>();
+        Response<List<JChain>> response = RetrofitService.getInstance().getServerApi().getChains(user.getToken()).execute();
+        if (!response.isSuccessful() || response.body() == null)
+            throw new NetworkErrorException("Bad response");
 
-            userData = fetchUserData();
-        }
-        catch (Exception e) {
-            throw e;
-        }
-        finally {
-            staticLock.unlock();
+        for (JChain chain : response.body()) {
+            markers.add(new ChainView(chain));
         }
 
+        userData = fetchUserData();
     }
 
     private UserData fetchUserData() throws IOException {
@@ -139,11 +126,11 @@ public class LocalState {
     private void noStateFill() {
         currentChainId = -1;
         location = internalLocation;
-        currentChain = null;
+        currentChain = NO_CHAIN;
+        userData = NO_USER;
     }
 
-    public void update() {
-        updateLock.lock();
+    private void update() {
 
         location = internalLocation;
 
@@ -156,44 +143,37 @@ public class LocalState {
                 nearestChain = view;
             }
         }
-        Log.d("location", "updatePosition: " + minDistance);
         if (minDistance < 2_000) {
             currentChainId = nearestChain.getChainId();
         }
         else {
-            currentChainId = -1;
+            currentChainId = NO_CHAIN.getView().getChainId();
         }
 
         try {
             currentChain = getChainById(currentChainId);
-            userData = fetchUserData();
-        } catch (IOException e) {
-            e.printStackTrace();
-            //TODO Wtf
+        } catch (IOException ignore) {
+            currentChain = NO_CHAIN;
         }
 
-        updateLock.unlock();
+        try {
+            userData = fetchUserData();
+        } catch (IOException ignore) {
+            userData = NO_USER;
+        }
+
     }
 
     public List<ChainView> getMarkers() {
-        staticLock.lock();
-        List<ChainView> result = markers;
-        staticLock.unlock();
-        return result;
+        return markers;
     }
 
     public UserIdentity getUser() {
-        staticLock.lock();
-        UserIdentity result = user;
-        staticLock.unlock();
-        return result;
+        return user;
     }
 
     public int getCurrentChainId() {
-        updateLock.lock();
-        int result = currentChainId;
-        updateLock.unlock();
-        return result;
+        return currentChainId;
     }
 
     private ChainData getChainById(int chainId) throws IOException {
@@ -206,19 +186,14 @@ public class LocalState {
         Response<List<JContrib>> contribResponse = RetrofitService.getInstance().getServerApi().getContribsByChain(chainId, user.getToken())
                 .execute();
 
-        if (!chainResponse.isSuccessful() || !contribResponse.isSuccessful()) {
-            throw new IOException("Request failed");
+        if (!chainResponse.isSuccessful() || !contribResponse.isSuccessful() || chainResponse.body() == null || contribResponse.body() == null) {
+            return NO_CHAIN;
         }
 
         ChainView view = new ChainView(chainResponse.body());
 
         List<JContrib> contribs = contribResponse.body();
-        contribs.sort(new Comparator<JContrib>() {
-            @Override
-            public int compare(JContrib o1, JContrib o2) {
-                return new BigInteger(o2.getValue()).compareTo(new BigInteger(o1.getValue()));
-            }
-        });
+        contribs.sort((o1, o2) -> new BigInteger(o2.getValue()).compareTo(new BigInteger(o1.getValue())));
 
         BigInteger myContribution = BigInteger.ZERO;
         List<ChainData.Contributor> contributors = new ArrayList<>();
@@ -234,66 +209,61 @@ public class LocalState {
     }
 
     public GeoPoint getLocation() {
-        updateLock.lock();
-        GeoPoint result = location;
-        updateLock.unlock();
-        return result;
+        return location;
     }
 
-    public ChainData getCurrentChain() {
-        updateLock.lock();
-        ChainData result = currentChain;
-        updateLock.unlock();
-        return result;
+    public @NonNull ChainData getCurrentChain() {
+        return currentChain;
     }
 
+    /**
+     * Makes an attempt to contribute to the current chain
+     * @param contribCallBack the message callback accepts message which is a result of an attempt to contribute
+     */
     public void makeContrib(final Consumer<String> contribCallBack) {
-        updateLock.lock();
-        RetrofitService.getInstance().getServerApi().makeContrib(new MakeContribBody(currentChain.getView().getChainId(), String.valueOf(1), user.getToken()))
+        RetrofitService.getInstance().getServerApi().makeContrib(new MakeContribBody(currentChain.getView().getChainId(), user.getToken()))
                 .enqueue(new Callback<ActionReportResponse>() {
                     @Override
-                    public void onResponse(Call<ActionReportResponse> call, Response<ActionReportResponse> response) {
-                        if (!response.isSuccessful())
+                    public void onResponse(@NonNull Call<ActionReportResponse> call, @NonNull Response<ActionReportResponse> response) {
+                        if (!response.isSuccessful() || response.body() == null) {
                             onFailure(call, new RuntimeException("Bad response"));
-
-                        if (response.body().getResponse().equals("ok")) {
-                            AsyncTask.execute(() -> update());
+                            return;
                         }
+
                         contribCallBack.accept(response.body().getMessage());
                     }
 
                     @Override
-                    public void onFailure(Call<ActionReportResponse> call, Throwable t) {
+                    public void onFailure(@NonNull Call<ActionReportResponse> call, @NonNull Throwable t) {
+                        contribCallBack.accept(t.getMessage());
                     }
                 });
-        updateLock.unlock();
     }
 
     public UserData getUserData() {
-        updateLock.lock();
-        UserData result = userData;
-        updateLock.unlock();
-        return result;
+        return userData;
     }
 
     private void initUpdateCycle() {
         staticObservable = Observable.fromCallable(() -> {
             initStatic();
             return 0L;
-        }).subscribeOn(Schedulers.io()).doOnNext(tick -> Log.d("Stateful", "staticObservable:")).cache();
+        }).subscribeOn(Schedulers.io()).cache();
 
         updateObservable = Observable.interval(0, 3, TimeUnit.SECONDS)
                 .subscribeOn(Schedulers.io())
                 .map(tick -> {
                     update();
                     return tick;
-                }).doOnNext(tick -> Log.d("Stateful", "updateObservable:")).share().doOnSubscribe(tick -> Log.d("Stateful", "subscribed"));
+                }).share();
     }
 
+    /** Returns observable related to update event */
     public Observable<Long> getUpdates() {
         return updateObservable;
     }
 
+    /** Returns observable related to static initialization */
     public Observable<Long> getStatics() {
         return staticObservable;
     }

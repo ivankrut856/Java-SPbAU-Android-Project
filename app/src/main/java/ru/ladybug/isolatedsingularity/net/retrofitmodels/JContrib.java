@@ -3,6 +3,7 @@ package ru.ladybug.isolatedsingularity.net.retrofitmodels;
 import com.google.gson.annotations.Expose;
 import com.google.gson.annotations.SerializedName;
 
+/** Retrofit model of get responses of fetching chain contributor */
 public class JContrib {
     @SerializedName("user_id")
     @Expose

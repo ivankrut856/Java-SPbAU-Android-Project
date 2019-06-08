@@ -14,6 +14,7 @@ import ru.ladybug.isolatedsingularity.R;
 import ru.ladybug.isolatedsingularity.net.StatefulActivity;
 import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
+/** Stateful fragment with user data */
 public class UserFragment extends StatefulFragment {
     private LocalState state;
 
@@ -24,6 +25,7 @@ public class UserFragment extends StatefulFragment {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -37,11 +39,13 @@ public class UserFragment extends StatefulFragment {
         return view;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initStatic() {
         welcomeText.setText(String.format("The Great Conqueror: %s", state.getUserData().getName()));
     }
 
+    /** {@inheritDoc} */
     @Override
     public void updateDynamic() {
         moneyText.setText(String.format("Your money: %s", state.getUserData().getMoney()));

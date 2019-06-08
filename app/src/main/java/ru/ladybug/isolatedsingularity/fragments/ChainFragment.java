@@ -22,6 +22,7 @@ import ru.ladybug.isolatedsingularity.adapters.ContributorsAdapter;
 import ru.ladybug.isolatedsingularity.net.StatefulActivity;
 import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
+/** Stateful fragment with chain data, list of contributors and button for contribution */
 public class ChainFragment extends StatefulFragment {
 
     private ContributorsAdapter contributorsAdapter;
@@ -36,6 +37,7 @@ public class ChainFragment extends StatefulFragment {
 
     }
 
+    /** {@inheritDoc} */
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -55,7 +57,7 @@ public class ChainFragment extends StatefulFragment {
         smallBoostButton = view.findViewById(R.id.smallBoostButton);
         smallBoostButton.setOnClickListener(v -> {
             blockUI();
-            state.makeContrib(s -> ContribCallback(s));
+            state.makeContrib(this::ContribCallback);
         });
 
 
@@ -64,7 +66,7 @@ public class ChainFragment extends StatefulFragment {
         return view;
     }
 
-    public void ContribCallback(final String message) {
+    private void ContribCallback(final String message) {
         getActivity().runOnUiThread(() -> {
             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();
             unblockUI();
@@ -83,23 +85,18 @@ public class ChainFragment extends StatefulFragment {
     }
 
 
+    /** {@inheritDoc} */
     @Override
     public void initStatic() {
         // No static
     }
 
+    /** {@inheritDoc} */
     @Override
     public void updateDynamic() {
         final ChainData currentChain = state.getCurrentChain();
-        if (currentChain == null) {
-            chainTitle.setText(getString(R.string.no_chain_text));
-            myContribution.setText("");
-            contributorsAdapter.setContributors(Collections.emptyList());
-        }
-        else {
-            chainTitle.setText(currentChain.getView().getTitle());
-            myContribution.setText(String.format(Locale.getDefault(), "My contribution to the chain: %d", currentChain.getMyContribution()));
-            contributorsAdapter.setContributors(currentChain.getContributors());
-        }
+        chainTitle.setText(currentChain.getView().getTitle());
+        myContribution.setText(String.format(Locale.getDefault(), "My contribution to the chain: %d", currentChain.getMyContribution()));
+        contributorsAdapter.setContributors(currentChain.getContributors());
     }
 }

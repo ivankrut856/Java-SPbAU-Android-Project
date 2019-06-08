@@ -3,12 +3,13 @@ package ru.ladybug.isolatedsingularity;
 import java.math.BigInteger;
 import java.util.List;
 
+/** Constitutes of the chain data relevant to the client side */
 public class ChainData {
     private ChainView view;
     private List<Contributor> contributors;
     private BigInteger myContribution;
 
-
+    /** Field-wise constructor */
     public ChainData(ChainView view, List<Contributor> contributors, BigInteger myContribution) {
         this.view = view;
         this.contributors = contributors;
@@ -27,9 +28,12 @@ public class ChainData {
         return myContribution;
     }
 
+    /** Class represents chain contributor's data relevant to the client side such as visible name and amount of contribution */
     public static class Contributor {
         private BigInteger contribution;
         private String name;
+
+        /** Field-wise constructor */
         public Contributor(BigInteger contribution, String name) {
             this.contribution = contribution;
             this.name = name;

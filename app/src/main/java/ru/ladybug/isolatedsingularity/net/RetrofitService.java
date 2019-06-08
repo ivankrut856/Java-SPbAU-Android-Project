@@ -3,10 +3,13 @@ package ru.ladybug.isolatedsingularity.net;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+/** Retrofit settings class */
 public class RetrofitService {
     private static RetrofitService instance;
-    private static final String BASE_URL = "http://chain-srv.herokuapp.com:80/";
     private Retrofit retrofit;
+
+    /** The remote host */
+    private static final String BASE_URL = "http://chain-srv.herokuapp.com:80/";
 
     private RetrofitService() {
         retrofit = new Retrofit.Builder()
@@ -15,6 +18,7 @@ public class RetrofitService {
                 .build();
     }
 
+    /** Singleton factory */
     public static RetrofitService getInstance() {
         if (instance == null) {
             instance = new RetrofitService();
@@ -22,6 +26,7 @@ public class RetrofitService {
         return instance;
     }
 
+    /** Server api factory */
     public ServerApi getServerApi() {
         return retrofit.create(ServerApi.class);
     }

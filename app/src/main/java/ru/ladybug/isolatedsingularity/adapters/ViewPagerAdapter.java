@@ -15,6 +15,7 @@ import ru.ladybug.isolatedsingularity.fragments.MapFragment;
 import ru.ladybug.isolatedsingularity.fragments.UserFragment;
 import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
+/** Simple slider fragment pager adapter with lifecycle events support and autosubscription on state's events */
 public class ViewPagerAdapter extends FragmentPagerAdapter {
 
     private MapFragment mapFragment;
@@ -23,11 +24,17 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
 
     private LocalState state;
 
+    /**
+     * Construct autosubscribing slider adapter with given state to listen
+     * @param fragmentManager the fragment manager which is to rule over new fragments
+     * @param state the state whose events are to be listen
+     */
     public ViewPagerAdapter(FragmentManager fragmentManager, LocalState state) {
         super(fragmentManager);
         this.state = state;
     }
 
+    /** {@inheritDoc} */
     @Override
     public CharSequence getPageTitle(int position) {
         switch (position) {
@@ -42,6 +49,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         }
     }
 
+    /** {@inheritDoc */
     @Override
     public Fragment getItem(int position) {
         switch (position) {
@@ -56,6 +64,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         }
     }
 
+    /** {@inheritDoc} */
     @NonNull
     @Override
     public Object instantiateItem(@NonNull ViewGroup container, int position) {
@@ -77,6 +86,7 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
         return createdFragment;
     }
 
+    /** {@inheritDoc} */
     @Override
     public int getCount() {
         return 3;

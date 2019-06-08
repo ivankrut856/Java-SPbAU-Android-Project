@@ -31,6 +31,7 @@ import ru.ladybug.isolatedsingularity.R;
 import ru.ladybug.isolatedsingularity.net.StatefulActivity;
 import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 
+/** Stateful fragment with map on it, markers for every chain and user position */
 public class MapFragment extends StatefulFragment {
 
     private Context context;
@@ -41,6 +42,7 @@ public class MapFragment extends StatefulFragment {
 
     private LocalState state;
 
+    /** {@inheritDoc} */
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         super.onCreateView(inflater, container, savedInstanceState);
@@ -54,7 +56,7 @@ public class MapFragment extends StatefulFragment {
 
         locationButton = view.findViewById(R.id.locationButton);
         locationButton.setOnClickListener(v -> {
-            if (state.getCurrentChainId() != -1) {
+            if (state.getCurrentChain() != state.NO_CHAIN) {
                 cityMap.getController().animateTo(state.getCurrentChain().getView().getPosition());
             }
         });
@@ -68,6 +70,7 @@ public class MapFragment extends StatefulFragment {
         return view;
     }
 
+    /** {@inheritDoc} */
     @Override
     public void onResume() {
         super.onResume();
@@ -75,6 +78,7 @@ public class MapFragment extends StatefulFragment {
         cityMap.onResume();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void onPause() {
         cityMap.onPause();
@@ -82,6 +86,7 @@ public class MapFragment extends StatefulFragment {
         super.onPause();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void initStatic() {
         IMapController mapController = cityMap.getController();
@@ -118,12 +123,7 @@ public class MapFragment extends StatefulFragment {
     }
 
     private void selectChain() {
-        if (state.getCurrentChainId() == -1) {
-            locationButton.setText(getString(R.string.no_chain_text));
-        }
-        else {
-            locationButton.setText(state.getCurrentChain().getView().getTitle());
-        }
+        locationButton.setText(state.getCurrentChain().getView().getTitle());
 
         if (myPositionOverlayIndex != -1) {
             cityMap.getOverlayManager().set(myPositionOverlayIndex, getPositionOverlay());
@@ -148,11 +148,13 @@ public class MapFragment extends StatefulFragment {
                 context);
     }
 
+    /** {@inheritDoc} */
     @Override
     public void onDetach() {
         super.onDetach();
     }
 
+    /** {@inheritDoc} */
     @Override
     public void updateDynamic() {
         selectChain();
