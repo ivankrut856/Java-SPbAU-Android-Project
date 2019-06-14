@@ -56,10 +56,11 @@ public class LoginActivity extends AppCompatActivity {
 
                     if (response.body().getResponse().equals("wa")) {
                         Toast.makeText(getApplicationContext(), "Unable to login. Please check login and password", Toast.LENGTH_LONG).show();
+                        unblockUI();
                         return;
                     }
-                    unblockUI();
 
+                    unblockUI();
                     Intent intent = new Intent(getApplicationContext(), MainActivity.class);
                     intent.putExtra("user_id", response.body().getUserId());
                     intent.putExtra("token", response.body().getToken());
