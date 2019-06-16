@@ -18,6 +18,9 @@ import ru.ladybug.isolatedsingularity.net.StatefulFragment;
 /** Simple slider fragment pager adapter with lifecycle events support and autosubscription on state's events */
 public class ViewPagerAdapter extends FragmentPagerAdapter {
 
+    /*
+     * Эти поля вообще не используются и могут быть спокойно удалены
+     */
     private MapFragment mapFragment;
     private ChainFragment chainFragment;
     private UserFragment userFragment;
@@ -52,6 +55,11 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
     /** {@inheritDoc */
     @Override
     public Fragment getItem(int position) {
+        /*
+         * Кажется, что логичнее создать эти фрагменты по одному разу, после чего переиспользовать
+         *
+         * Возможно я ошибаюсь, т.к. не очень хорошо знаком с этой частью UI андроида
+         */
         switch (position) {
             case 0:
                 return new MapFragment();
@@ -60,6 +68,9 @@ public class ViewPagerAdapter extends FragmentPagerAdapter {
             case 2:
                 return new UserFragment();
             default:
+                /*
+                 * Minor: в сообщение было бы неплохо добавить значение position
+                 */
                 throw new IndexOutOfBoundsException("Wrong position");
         }
     }

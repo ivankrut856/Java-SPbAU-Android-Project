@@ -20,6 +20,7 @@ public class RetrofitService {
 
     /** Singleton factory */
     public static RetrofitService getInstance() {
+        // это непотокобезопасный синглтон
         if (instance == null) {
             instance = new RetrofitService();
         }

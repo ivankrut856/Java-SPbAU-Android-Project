@@ -4,6 +4,7 @@ import ru.ladybug.isolatedsingularity.net.retrofitmodels.JUser;
 
 /** Class represents user data relevant to the client side */
 public class UserData {
+    // стоит сделать финальными
     private String name;
     private int money;
 

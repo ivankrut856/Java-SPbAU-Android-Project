@@ -6,6 +6,7 @@ import ru.ladybug.isolatedsingularity.net.retrofitmodels.JChain;
 
 /** Class represents descriptive part of chain data relevant to the map */
 public class ChainView {
+    // стоит сделать финальными
     private String title;
     private String description;
     private GeoPoint position;

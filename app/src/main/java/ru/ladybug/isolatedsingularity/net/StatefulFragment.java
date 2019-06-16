@@ -23,6 +23,8 @@ public abstract class StatefulFragment extends Fragment {
     @CallSuper
     public void onUpdateError(Throwable throwable) {
         Toast.makeText(getContext(), "Recent server update failed", Toast.LENGTH_SHORT).show();
+        // не надо просто игнорировать исключения
+        // логгируйте их
     }
 
     private Observable<Long> stateUpdate = null;

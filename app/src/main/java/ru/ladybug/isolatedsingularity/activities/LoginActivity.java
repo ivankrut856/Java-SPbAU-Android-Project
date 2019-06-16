@@ -8,6 +8,7 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -43,6 +44,12 @@ public class LoginActivity extends AppCompatActivity {
 
         checkDangerousPermissions();
 
+        /*
+         * Константы ключей должны быть вынесены в отдельные финальные поля
+         * Сообщения, выводимые пользователю, должны быть вынесены в ресурсы
+         *   приложения, для удобства использования и локализации
+         */
+
         loginButton.setOnClickListener(view -> {
             Toast.makeText(getApplicationContext(), "Login attempt", Toast.LENGTH_SHORT).show();
             blockUI();
@@ -72,6 +79,7 @@ public class LoginActivity extends AppCompatActivity {
                 public void onFailure(@NonNull Call<AuthReportResponse> call, @NonNull Throwable t) {
                     Toast.makeText(getApplicationContext(), "Unable to login. Please check your network connection", Toast.LENGTH_LONG).show();
                     unblockUI();
+                    Log.d("DEBUG", "fail", t);
                 }
             });
         });

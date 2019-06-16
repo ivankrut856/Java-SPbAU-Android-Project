@@ -33,6 +33,7 @@ public class ChainFragment extends StatefulFragment {
 
     private LocalState state;
 
+    // зачем этот конструктор?
     public ChainFragment() {
 
     }
@@ -66,6 +67,7 @@ public class ChainFragment extends StatefulFragment {
         return view;
     }
 
+    // функции должны именоваться со строчной буквы
     private void ContribCallback(final String message) {
         getActivity().runOnUiThread(() -> {
             Toast.makeText(getContext(), message, Toast.LENGTH_LONG).show();

@@ -51,7 +51,7 @@ class AuthManager:
 			"timestamp": str(timestamp)
 		})
 
-		return token;
+		return token;  # ; ?
 
 	def check_token(self, token):
 		if token is None:

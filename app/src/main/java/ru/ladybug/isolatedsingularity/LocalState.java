@@ -43,10 +43,17 @@ public class LocalState {
     /** Fake user using when an exception occurred during user data update */
     public final UserData NO_USER = new UserData("No user", 0);
     /** Default location using when it is not possible to determine real user location */
+    /*
+     * Отсутствие геокоординат лучше обрабатывать отдельно, и не разрешать пользователю ничего делать,
+     *   пока его координаты не будут определены
+     */
     private GeoPoint DEFAULT_LOCATION = new GeoPoint(59.9342802, 30.3350986);
 
     // Static
+    // По смыслу, тут не static, а constant или final
     private volatile List<ChainView> markers;
+    // user должен быть final, т.к. вы присваиваете его только в конструкторе
+    // volatile здесь не нужен совсем
     private volatile UserIdentity user;
 
     // Dynamic
@@ -54,6 +61,13 @@ public class LocalState {
     private volatile GeoPoint location;
     private volatile ChainData currentChain;
     private volatile UserData userData;
+
+    /*
+     * read markers -> read location
+     * У вас в коде есть только такая связи между чтением переменных
+     *   (за пределами класса LocalState), поэтому можно было не лепить volatile вообще
+     *   везде, а грамотно расставить только в нужных местах
+     */
 
     // Service
     private GeoPoint internalLocation;
@@ -104,6 +118,12 @@ public class LocalState {
     }
 
     private void initStatic() throws IOException, NetworkErrorException {
+        // если при таком коде убрать volatile с markers, то ничего не изменится
+        // с точки зрения потокобезопасности этот код выглядит ошибочным, т.к.
+        // вы публикуете непотокобезопасный список перед тем, как начинаете его заполнять
+
+        // я правильно понимаю, что если на сервере поменяются маркеры, то пользователь этого
+        // не увидит до тех пор, пока не перезапустит приложение?
         markers = new ArrayList<>();
         Response<List<JChain>> response = RetrofitService.getInstance().getServerApi().getChains(user.getToken()).execute();
         if (!response.isSuccessful() || response.body() == null)
@@ -134,8 +154,10 @@ public class LocalState {
 
         location = internalLocation;
 
+        // все также захардкоженные константы, что очень плохо
         double minDistance = 100_000;
         ChainView nearestChain = null;
+        // что, если markers ещё не проинициализировался?
         for (ChainView view : markers) {
             double distance = view.getPosition().distanceToAsDouble(location);
             if (distance < minDistance) {
@@ -168,10 +190,12 @@ public class LocalState {
         return markers;
     }
 
+    // ненужный геттер
     public UserIdentity getUser() {
         return user;
     }
 
+    // ненужный геттер
     public int getCurrentChainId() {
         return currentChainId;
     }

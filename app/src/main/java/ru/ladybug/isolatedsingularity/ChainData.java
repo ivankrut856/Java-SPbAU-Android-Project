@@ -7,6 +7,10 @@ import java.util.List;
 public class ChainData {
     private ChainView view;
     private List<Contributor> contributors;
+    /*
+     * BigInteger -- это мощно. Почти наверняка, за всё время существования приложения,
+     *   пользователи не смогут переполнить int. И точно не смогут переполнить long
+     */
     private BigInteger myContribution;
 
     /** Field-wise constructor */

@@ -1,5 +1,6 @@
 package ru.ladybug.isolatedsingularity;
 
+// ненужные импорты
 import java.io.IOException;
 
 import retrofit2.Response;
@@ -8,6 +9,7 @@ import ru.ladybug.isolatedsingularity.net.retrofitmodels.AuthReportResponse;
 
 /** Class represents user credentials after login */
 public class UserIdentity {
+    // стоит сделать финальными
     private int userId;
     private String token;
 

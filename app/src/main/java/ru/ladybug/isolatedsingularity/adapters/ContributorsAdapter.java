@@ -18,6 +18,7 @@ import ru.ladybug.isolatedsingularity.R;
 public class ContributorsAdapter extends RecyclerView.Adapter<ContributorsAdapter.ContributorHolder> {
     private List<ChainData.Contributor> contributors = new ArrayList<>();
 
+    // ненужный геттер
     public List<ChainData.Contributor> getContributors() {
         return contributors;
     }

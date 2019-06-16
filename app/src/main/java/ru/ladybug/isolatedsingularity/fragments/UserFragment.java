@@ -21,6 +21,7 @@ public class UserFragment extends StatefulFragment {
     private TextView welcomeText;
     private TextView moneyText;
 
+    // зачем этот конструктор?
     public UserFragment() {
 
     }

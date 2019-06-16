@@ -9,6 +9,10 @@ from AuthManager import *
 MONEY_TO_BUY = 10
 INCOME_PER_CHAIN = 10
 
+# Minor: для уменьшения бойлерплейта при создании этих ответов, а также
+#  во избежание опечаток в `response` и `message` стоит эти две строки вынести
+#  в константы, а также сделать функцию, которая конструирует эти словари
+#  по заданным значениям полей
 WRONG_AUTH_DATA = {
 	"response": "wa",
 	"message": "Login or password are incorrect",
@@ -34,6 +38,9 @@ NOT_ENOUGH_RESOURCES = {
 	"message": "Not enough resources to complete the action"
 }
 
+# весь main код должен быть вынесен в блок `if __name__ == '__main__':
+# 1. облегчает читаемость кода, не нужно искать разбросанные куски мейна по всему файлу
+# 2. спасёт от исполнения этого кода при импорте этого скрипта куда-то ещё
 app = Flask(__name__)
 app.config["MONGO_URI"] = "mongodb+srv://dbUser:pass@chaincluster-rqpx3.mongodb.net/main"
 mongo = PyMongo(app)
@@ -44,6 +51,7 @@ action_handlers[1] = "make_contrib"
 
 events = Timeloop()
 
+# ничего не говорящее имя функции
 def keyf(x, total_contrib):
 	real_pcent = x / total_contrib
 	basic = int(real_pcent * INCOME_PER_CHAIN)
@@ -57,14 +65,19 @@ def event_loop():
 	chain_contributors = {}
 	contribs = mongo.db.contribs.find()
 	for elem in contribs:
+		# зачем user_id, если он не используется?
 		user_id = elem["user_id"]
 		chain_id = elem["chain_id"]
 
+		# все эти ключи, типа `user_id` также стоит вынести в отдельные константы
+
 		chain_contribs[chain_id] = (chain_contribs.get(chain_id, 0)) + int(elem["value"])
+		# see collections.defaultDict
 		if chain_id not in chain_contributors:
 			chain_contributors[chain_id] = []
 		chain_contributors[chain_id].append(elem)
 
+	# for chain, users_list in chain_contributors.items():
 	for chain in chain_contributors:
 		user_result = {}
 		users_list = chain_contributors[chain]
@@ -139,7 +152,7 @@ def get_contribs_by_chain(id):
 def make_action():
 	if request.method == "GET":
 		return jsonify(UNEXPECTED_METHOD)
-	action = request.get_json();
+	action = request.get_json();  # ; ?
 	if action is None:
 		return jsonify("bad request")
 	if not auth_manager.check_token(action.get("token")):
@@ -159,6 +172,8 @@ def make_contrib(action):
 
 	user_money = user["money"]
 	if user_money < MONEY_TO_BUY:
+		# логгирование стоит делать на каждый чих с более подробной информацией
+		#   (например, что за юзер), или же не делать совсем (но лучше делать)
 		print(NOT_ENOUGH_RESOURCES)
 		return jsonify(NOT_ENOUGH_RESOURCES)
 
@@ -208,6 +223,9 @@ def get_user():
 
 @app.route("/register")
 def register():
+	# передавать пароль в открытом виде в запросе -- плохая идея
+	#   стоит, хотя бы, добавить соль на стороне клиента, и передавать
+	#   уже хеш
 	username = request.args.get("username")
 	name = request.args.get("name")
 	password = request.args.get("password")
